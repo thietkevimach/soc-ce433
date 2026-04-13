@@ -584,5 +584,3 @@ Sau bài này, sinh viên có thể:
 
 ---
 
-# 38. Hết
-## Câu hỏi?
