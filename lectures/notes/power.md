@@ -1,40 +1,26 @@
-# Bài tập lớn: Thiết kế, tổng hợp và phân tích công suất cho khối RTL cơ bản
+# Bài tập lớn: Thiết kế RTL và mô phỏng phục vụ đánh giá rò rỉ bằng TVLA
 
+Thiết kế một khối RTL cơ bản và thực hiện quy trình từ RTL đến gate/post-implementation simulation. Thu thập switching/activity traces từ nhiều lần mô phỏng với hai nhóm dữ liệu **fixed** và **random**, sau đó dùng các trace này để thực hiện **TVLA** nhằm đánh giá sơ bộ rò rỉ kênh bên của thiết kế.
 ## 1. Mục tiêu
 
-Sinh viên thực hiện quy trình thiết kế phần cứng số từ mức RTL đến implementation, sau đó phân tích tài nguyên và công suất tiêu thụ của thiết kế để phục vụ đánh giá **TLA (Trade-off giữa Timing – Logic/Area – Activity/Power)**.
+Sinh viên thiết kế một khối RTL cơ bản, thực hiện tổng hợp và mô phỏng ở mức gate/post-implementation để thu được **power/activity traces**, sau đó dùng các trace này để thực hiện **TVLA (Test Vector Leakage Assessment)** nhằm đánh giá sơ bộ khả năng rò rỉ thông tin bên kênh.
 
-## 2. Yêu cầu bài toán
+## 2. Bài toán
 
-Thiết kế một khối RTL cơ bản, ví dụ:
+Thiết kế một khối tính toán cơ bản, ví dụ:
 
-* **Khối nhân ma trận**
-* Hoặc **MAC array**
-* Hoặc **bộ nhân tích lũy đơn giản cho xử lý tín hiệu**
+* Matrix multiplication 2x2 / 4x4
+* MAC engine
+* FIR filter nhỏ
+* Montgomery/NTT toy block đơn giản
+* AES-like round toy module hoặc multiplier-accumulator
 
-Khuyến nghị chọn bài toán sau để đồng nhất:
+Nếu muốn gắn rõ với SCA hơn, nên chọn:
 
-### Bài toán đề xuất
+* **khối nhân cộng tuần tự**
+* hoặc **khối xử lý dữ liệu có nhiều phép chuyển trạng thái nội bộ**
 
-Thiết kế khối **Matrix Multiplication 2x2 hoặc 4x4** với dữ liệu đầu vào số nguyên không dấu 8-bit.
-
-#### Chức năng
-
-Cho hai ma trận:
-
-* `A[m][n]`
-* `B[n][p]`
-
-Thiết kế phần cứng tính:
-
-* `C = A x B`
-
-#### Gợi ý cấu hình
-
-* Mức cơ bản: ma trận **2x2**
-* Mức nâng cao: ma trận **4x4**
-* Mỗi phần tử: **8-bit unsigned**
-* Kết quả đầu ra: chọn độ rộng phù hợp để tránh tràn số
+vì dễ quan sát khác biệt switching activity.
 
 ---
 
@@ -44,239 +30,179 @@ Thiết kế phần cứng tính:
 
 Sinh viên phải:
 
-* Viết mã RTL bằng **Verilog** hoặc **VHDL**
-* Thiết kế theo kiến trúc có thể tổng hợp được
-* Có các tín hiệu cơ bản:
+* viết RTL bằng Verilog/VHDL
+* có `clk`, `rst`, `start`, `done`
+* có dữ liệu đầu vào, đầu ra rõ ràng
+* có thanh ghi nội bộ hoặc datapath đủ để quan sát hoạt động chuyển mạch
 
-  * `clk`
-  * `rst_n` hoặc `rst`
-  * `start`
-  * `done`
-  * input matrix A
-  * input matrix B
-  * output matrix C
+### 3.2. Tổng hợp và implementation
 
-### 3.2. Kiến trúc
+Sinh viên phải:
 
-Sinh viên được chọn một trong hai hướng:
+* chạy synthesis
+* chạy implementation/place-and-route
+* xuất netlist sau tổng hợp hoặc sau implementation
+* chuẩn bị mô phỏng mức gate/post-implementation
 
-* **Kiến trúc tuần tự**: dùng ít phần cứng hơn, nhiều chu kỳ hơn
-* **Kiến trúc song song**: dùng nhiều tài nguyên hơn, tốc độ cao hơn
+### 3.3. Mô phỏng phục vụ TVLA
 
-Khuyến khích sinh viên giải thích lựa chọn kiến trúc của mình.
+Sinh viên phải tạo môi trường mô phỏng để thu **switching traces theo thời gian**, ví dụ:
 
----
+* VCD
+* SAIF
+* hoặc dạng waveform activity tương đương
 
-## 4. Các bước thực hiện
-
-### Phần 1: Thiết kế và mô phỏng chức năng
-
-* Viết RTL cho khối nhân ma trận
-* Viết testbench kiểm tra chức năng
-* Chạy mô phỏng chức năng
-* Chứng minh đầu ra đúng với ít nhất 3 bộ test
-
-### Phần 2: Tổng hợp và phân tích tài nguyên
-
-Sau khi hoàn tất RTL, thực hiện tổng hợp trên công cụ FPGA/ASIC phù hợp.
-
-Sinh viên cần trích xuất và báo cáo tối thiểu các thông tin sau:
-
-* **Area / Utilization**
-
-  * LUT
-  * FF
-  * DSP
-  * BRAM
-* **Timing**
-
-  * Fmax
-  * Critical path
-* **Power**
-
-  * Total power
-  * Dynamic power
-  * Static/Leakage power
-
-### Phần 3: Mô phỏng sau implementation
-
-* Thực hiện **post-synthesis** hoặc **post-implementation simulation**
-* Thu thập switching activity (VCD/SAIF)
-* Dùng activity này để ước lượng công suất chính xác hơn
-* So sánh:
-
-  * Power ước lượng mặc định
-  * Power có activity từ mô phỏng sau implementation
-
-### Phần 4: Vẽ đồ thị và phân tích TLA
-
-Sinh viên cần vẽ đồ thị power để phục vụ phân tích trade-off.
+Lưu ý:
+Mục tiêu ở đây không phải chỉ lấy một con số power trung bình, mà là lấy **dấu vết hoạt động theo từng chu kỳ/thời điểm** để phân tích thống kê.
 
 ---
 
-## 5. Nội dung phân tích bắt buộc
+## 4. Yêu cầu riêng cho TVLA
 
-### 5.1. Phân tích tài nguyên
+## 4.1. Tạo hai tập mẫu
 
-So sánh giữa các lựa chọn thiết kế, ví dụ:
+Sinh viên phải xây dựng hai nhóm input:
 
-* 2x2 vs 4x4
-* tuần tự vs song song
-* có pipeline vs không pipeline
+### Nhóm 1: Fixed input set
 
-### 5.2. Phân tích công suất
+* một phần dữ liệu được giữ cố định
+* ví dụ: cùng một vector đầu vào hoặc cùng một ma trận A
 
-Sinh viên cần phân tích công suất theo các tiêu chí:
+### Nhóm 2: Random input set
 
-* công suất tổng
-* công suất động
-* công suất tĩnh
-* ảnh hưởng của tần số clock
-* ảnh hưởng của mức độ hoạt động dữ liệu
+* dữ liệu thay đổi ngẫu nhiên qua nhiều lần chạy
 
-### 5.3. Phân tích TLA
-
-TLA ở đây có thể hiểu là phân tích đánh đổi giữa:
-
-* **T – Timing**: tốc độ, số chu kỳ, độ trễ
-* **L – Logic/Area**: mức sử dụng tài nguyên phần cứng
-* **A – Activity/Power**: mức chuyển mạch và công suất tiêu thụ
-
-Sinh viên cần rút ra nhận xét như:
-
-* thiết kế song song nhanh hơn nhưng tốn area và power hơn
-* thiết kế tuần tự tiết kiệm area nhưng latency lớn hơn
-* pipeline có thể cải thiện timing nhưng làm tăng register và switching activity
+Mỗi lần chạy mô phỏng tạo ra một trace activity/power theo thời gian.
 
 ---
 
-## 6. Đồ thị yêu cầu
+## 4.2. Số lượng mẫu
 
-Sinh viên phải vẽ tối thiểu các đồ thị sau:
+* Mỗi nhóm cần có số lượng trace đủ lớn để làm kiểm định thống kê
+* Khuyến nghị:
 
-### Đồ thị 1: Total Power theo kiến trúc
+  * tối thiểu: **200–500 traces mỗi nhóm**
+  * tốt hơn: **1000 traces mỗi nhóm**
 
-* Trục X: phiên bản thiết kế
-* Trục Y: total power
+---
+
+## 4.3. Dữ liệu cần thu
+
+Ở mỗi lần mô phỏng, sinh viên cần lưu ít nhất một trong các đại lượng sau:
+
+* tổng switching activity theo từng chu kỳ
+* toggle count của các nút nội bộ theo thời gian
+* power estimate theo time window
+* hoặc giá trị activity suy ra từ VCD/SAIF
+
+Sau đó chuẩn hóa thành dạng:
+
+* mỗi trace = một vector số theo thời gian
+* ví dụ: `[p1, p2, p3, ..., pn]`
+
+---
+
+## 4.4. Phân tích TVLA
+
+Sinh viên dùng hai tập trace để thực hiện kiểm định thống kê kiểu **fixed-vs-random t-test**.
+
+### Mục tiêu
+
+Kiểm tra xem tại thời điểm nào trong quá trình xử lý:
+
+* activity/power của hai nhóm có khác biệt có ý nghĩa thống kê hay không
+
+### Kết quả cần báo cáo
+
+* đồ thị trị số **t-value theo thời gian**
+* xác định các vùng thời gian có dấu hiệu rò rỉ
+* nhận xét module nào / pha nào của thiết kế có khả năng gây lộ thông tin nhiều hơn
+
+---
+
+## 5. Đồ thị yêu cầu
+
+### Đồ thị 1: Trace activity/power mẫu
+
+* vẽ 5–10 trace đại diện
+* để quan sát hình dạng tín hiệu theo thời gian
+
+### Đồ thị 2: Trung bình của hai nhóm
+
+* trung bình nhóm Fixed
+* trung bình nhóm Random
+* so sánh trực quan
+
+### Đồ thị 3: TVLA t-value theo thời gian
+
+* trục X: thời gian hoặc chỉ số mẫu
+* trục Y: t-value
+* đánh dấu ngưỡng phát hiện rò rỉ
+
+### Đồ thị 4: So sánh kiến trúc
 
 Ví dụ:
 
-* Seq_2x2
-* Parallel_2x2
-* Seq_4x4
-* Parallel_4x4
+* tuần tự vs song song
+* pipeline vs không pipeline
+* bit-width thấp vs cao
 
-### Đồ thị 2: Dynamic Power theo tần số
+và so sánh:
 
-* Trục X: tần số clock
-* Trục Y: dynamic power
-
-Ví dụ các mốc:
-
-* 50 MHz
-* 100 MHz
-* 150 MHz
-* 200 MHz
-
-### Đồ thị 3: Area vs Power
-
-* Trục X: LUT hoặc tổng tài nguyên quy đổi
-* Trục Y: total power
-
-### Đồ thị 4: Latency vs Power
-
-* Trục X: số chu kỳ hoặc thời gian xử lý
-* Trục Y: total power
+* peak |t|
+* số điểm vượt ngưỡng
+* vùng rò rỉ kéo dài bao lâu
 
 ---
 
-## 7. Sản phẩm cần nộp
+## 6. Nội dung phân tích bắt buộc
 
-### 7.1. Mã nguồn
+### 6.1. Phân tích chức năng
+
+* thiết kế có chạy đúng không
+* waveform đúng với mong đợi không
+
+### 6.2. Phân tích tài nguyên
+
+* LUT / FF / DSP / BRAM hoặc area tương đương
+* timing / Fmax
+
+### 6.3. Phân tích hoạt động chuyển mạch
+
+* phần nào của thiết kế hoạt động mạnh nhất
+* giai đoạn nào có activity lớn
+* input pattern có ảnh hưởng thế nào
+
+### 6.4. Phân tích TVLA
+
+* có xuất hiện rò rỉ hay không
+* rò rỉ mạnh ở giai đoạn nào
+* kiến trúc nào có xu hướng rò rỉ cao hơn
+* có mối liên hệ gì giữa area / latency / switching / leakage
+
+---
+
+## 7. Kết quả đầu ra sinh viên phải nộp
 
 * RTL source
-* Testbench
-* File constraint
-* Script tổng hợp/mô phỏng nếu có
-
-### 7.2. Báo cáo
-
-Báo cáo gồm các mục:
-
-1. Giới thiệu bài toán
-2. Kiến trúc thiết kế
-3. Mô tả RTL
-4. Kết quả mô phỏng chức năng
-5. Kết quả tổng hợp và implementation
-6. Kết quả phân tích power
-7. Các đồ thị power/TLA
-8. Nhận xét và kết luận
-
-### 7.3. Minh chứng kết quả
-
-* ảnh waveform
-* báo cáo utilization
-* báo cáo timing
-* báo cáo power
-* hình đồ thị
+* Testbench sinh dữ liệu fixed/random
+* Script mô phỏng
+* File trace hoặc dữ liệu trích xuất từ VCD/SAIF
+* Script phân tích TVLA
+* Báo cáo tổng hợp tài nguyên
+* Báo cáo đồ thị TVLA
+* Kết luận về mức độ rò rỉ
 
 ---
+**Các bước chính**
 
-## 8. Tiêu chí đánh giá
-
-### Thang điểm gợi ý
-
-* **20%**: RTL đúng chức năng
-* **15%**: testbench đầy đủ
-* **20%**: tổng hợp và implementation thành công
-* **15%**: báo cáo tài nguyên và timing
-* **15%**: phân tích power có cơ sở
-* **15%**: đồ thị và nhận xét TLA rõ ràng
-
----
-
-## 9. Gợi ý mở rộng
-
-Sinh viên khá/giỏi có thể làm thêm:
-
-* so sánh nhiều kiểu coding RTL khác nhau
-* thêm pipeline để tăng Fmax
-* dùng DSP block thay vì LUT-based multiplier
-* thay đổi bit-width đầu vào
-* đánh giá ảnh hưởng của data pattern đến power
-* so sánh power ở mức post-synthesis và post-implementation
+1. Viết RTL và testbench
+2. Tổng hợp và implementation
+3. Mô phỏng sau tổng hợp hoặc sau implementation
+4. Thu activity/power traces từ nhiều lần chạy
+5. Chia thành hai nhóm fixed và random
+6. Thực hiện kiểm định TVLA
+7. Vẽ đồ thị t-value theo thời gian
+8. Phân tích mối liên hệ giữa kiến trúc, switching activity và leakage
 
 ---
-
-## 10. Phiên bản ngắn gọn để giao trực tiếp cho sinh viên
-
-**Đề bài:**
-Thiết kế một khối RTL cơ bản thực hiện phép **nhân ma trận** (2x2 hoặc 4x4, dữ liệu 8-bit). Hoàn thành các bước:
-
-1. Viết RTL và testbench kiểm tra chức năng
-2. Tổng hợp thiết kế và báo cáo tài nguyên sử dụng (LUT/FF/DSP/BRAM hoặc area tương đương)
-3. Phân tích timing và công suất tiêu thụ
-4. Thực hiện mô phỏng sau implementation để lấy switching activity phục vụ phân tích power
-5. Vẽ các đồ thị power và thực hiện phân tích **TLA trade-off** giữa:
-
-   * Timing
-   * Logic/Area
-   * Activity/Power
-
-**Yêu cầu đầu ra:**
-
-* mã RTL
-* testbench
-* báo cáo tổng hợp/implementation
-* báo cáo power
-* đồ thị minh họa
-* phần nhận xét, so sánh, đánh giá trade-off
-
----
-
-Nếu bạn muốn, tôi có thể viết tiếp cho bạn một **bản giao bài dạng markdown chuẩn giảng viên**, kèm luôn:
-
-* mục tiêu học phần
-* rubric chấm điểm
-* template báo cáo
-* mẫu bảng kết quả power/area/timing cho sinh viên điền.
